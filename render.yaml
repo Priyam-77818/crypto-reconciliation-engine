@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: crypto-reconciliation-engine
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node dist/app.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: LOG_LEVEL
+        value: info
+      - key: TIMESTAMP_TOLERANCE_SECONDS
+        value: 300
+      - key: QUANTITY_TOLERANCE_PCT
+        value: 0.01
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 60000
+      - key: MONGODB_URI
+        sync: false   # You will paste this from MongoDB Atlas

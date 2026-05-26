@@ -1,0 +1,527 @@
+﻿<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Crypto Reconciliation Engine</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f1117;--sb:#1a1d27;--card:#1e2130;--bdr:#2a2d3e;--green:#00d4aa;--yellow:#f59e0b;--red:#ef4444;--orange:#f97316;--blue:#3b82f6;--text:#e2e8f0;--muted:#64748b}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+.sb{width:220px;background:var(--sb);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:20px 16px;border-bottom:1px solid var(--bdr)}
+.sb-logo h1{font-size:17px;font-weight:700;color:var(--green)}
+.sb-logo small{font-size:11px;color:var(--muted)}
+.nav{padding:8px 0;flex:1}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;border-left:3px solid transparent;transition:all .15s}
+.ni:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.ni.on{color:var(--green);background:rgba(0,212,170,.07);border-left-color:var(--green)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.topbar h2{font-size:17px;font-weight:600}
+.ta{display:flex;gap:8px}
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
+.bp{background:var(--green);color:#0f1117}.bp:hover{background:#00bfa0}
+.bo{background:transparent;color:var(--text);border:1px solid var(--bdr)}.bo:hover{border-color:var(--green);color:var(--green)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}.page.on{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:18px}
+.cl{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.cv{font-size:26px;font-weight:700;margin-top:5px}
+.cs{font-size:11px;color:var(--muted);margin-top:3px}
+.cg .cv{color:var(--green)}.cy .cv{color:var(--yellow)}.cr .cv{color:var(--red)}.co .cv{color:var(--orange)}.cb .cv{color:var(--blue)}
+.sec{background:var(--card);border:1px solid var(--bdr);border-radius:10px;margin-bottom:18px}
+.sh{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.sh h3{font-size:14px;font-weight:600}
+.sb2{padding:18px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:9px 12px;color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bdr)}
+td{padding:10px 12px;border-bottom:1px solid rgba(42,45,62,.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+tr.cp{cursor:pointer}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px}
+.bg{background:rgba(0,212,170,.15);color:var(--green)}
+.by{background:rgba(245,158,11,.15);color:var(--yellow)}
+.br{background:rgba(239,68,68,.15);color:var(--red)}
+.bo2{background:rgba(249,115,22,.15);color:var(--orange)}
+.bb{background:rgba(59,130,246,.15);color:var(--blue)}
+.bx{background:rgba(100,116,139,.15);color:var(--muted)}
+.fg{display:flex;flex-direction:column;gap:5px;flex:1;min-width:160px}
+.fg label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.fg input{background:#252836;border:1px solid var(--bdr);border-radius:7px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;transition:border .15s}
+.fg input:focus{border-color:var(--green)}
+.fr{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end}
+.hb{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;margin-bottom:18px;font-size:13px;font-weight:500}
+.hok{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.3);color:var(--green)}
+.herr{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dg{background:var(--green)}.dr{background:var(--red)}
+.pb{height:5px;background:var(--bdr);border-radius:3px;overflow:hidden;margin-top:6px}
+.pf{height:100%;background:var(--green);border-radius:3px;transition:width .4s}
+.mono{font-family:monospace;font-size:11px;color:var(--muted)}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.sp{display:inline-block;width:14px;height:14px;border:2px solid var(--bdr);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#tc{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:7px;z-index:9999}
+.toast{padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;animation:si .2s ease;max-width:300px}
+.ts{background:#0d2e27;border:1px solid var(--green);color:var(--green)}
+.te{background:#2e0d0d;border:1px solid var(--red);color:var(--red)}
+.ti{background:#0d1a2e;border:1px solid var(--blue);color:var(--blue)}
+@keyframes si{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+.rt{display:inline-block;background:rgba(245,158,11,.1);color:var(--yellow);border-radius:4px;padding:1px 6px;font-size:10px;margin:1px}
+code{background:#252836;padding:1px 5px;border-radius:4px;font-size:11px}
+</style>
+</head><body>
+<aside class="sb">
+  <div class="sb-logo"><h1>&#8383; Crypto Recon</h1><small>Reconciliation Engine</small></div>
+  <nav class="nav">
+    <div class="ni on" data-page="dashboard">&#127968; Dashboard</div>
+    <div class="ni" data-page="ingest">&#128229; Ingest CSV</div>
+    <div class="ni" data-page="reconcile">&#9881;&#65039; Reconcile</div>
+    <div class="ni" data-page="runs">&#128203; All Runs</div>
+    <div class="ni" data-page="report">&#128202; Report</div>
+    <div class="ni" data-page="unmatched">&#128269; Unmatched</div>
+    <div class="ni" data-page="rejected">&#128465;&#65039; Rejected Rows</div>
+  </nav>
+</aside>
+<div class="main">
+  <div class="topbar">
+    <h2 id="ptitle">Dashboard</h2>
+    <div class="ta">
+      <button class="btn bo" onclick="window.open('/api-docs','_blank')">&#128214; Swagger Docs</button>
+      <button class="btn bo" onclick="refresh()">&#8635; Refresh</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="pg-dashboard" class="page on">
+      <div id="hbanner"></div>
+      <div class="grid" id="dstats"><div class="card"><div class="cl">Loading...</div></div></div>
+      <div class="sec">
+        <div class="sh"><h3>Recent Reconciliation Runs</h3><button class="btn bo" style="font-size:11px;padding:5px 10px" onclick="go('runs')">View All</button></div>
+        <div class="sb2"><div class="tw"><table>
+          <thead><tr><th>Run ID</th><th>Status</th><th>Match Rate</th><th>Matched</th><th>Conflicting</th><th>Unmatched Exc</th><th>Duration</th><th>Started</th></tr></thead>
+          <tbody id="druns"><tr><td colspan="8"><div class="empty"><span class="sp"></span> Loading...</div></td></tr></tbody>
+        </table></div></div>
+      </div>
+    </div>
+
+    <!-- INGEST -->
+    <div id="pg-ingest" class="page">
+      <div class="sec">
+        <div class="sh"><h3>Ingest CSV Files</h3></div>
+        <div class="sb2">
+          <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Reads <code>data/user-transactions.csv</code> and <code>data/exchange-transactions.csv</code>, validates every row, normalises assets and types, and stores them in MongoDB.</p>
+          <button class="btn bp" id="ibtn" onclick="doIngest()">&#128229; Run Ingestion</button>
+        </div>
+      </div>
+      <div id="ires"></div>
+    </div>
+
+    <!-- RECONCILE -->
+    <div id="pg-reconcile" class="page">
+      <div class="sec">
+        <div class="sh"><h3>Run Reconciliation</h3></div>
+        <div class="sb2">
+          <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Leave blank to use defaults (timestamp tolerance = 300s, quantity tolerance = 0.01%).</p>
+          <div class="fr">
+            <div class="fg"><label>Timestamp Tolerance (seconds)</label><input type="number" id="rts" placeholder="Default: 300" min="0"/></div>
+            <div class="fg"><label>Quantity Tolerance (%)</label><input type="number" id="rqty" placeholder="Default: 0.01" min="0" step="0.001"/></div>
+          </div>
+          <button class="btn bp" id="rbtn" onclick="doRecon()">&#9881;&#65039; Start Reconciliation</button>
+        </div>
+      </div>
+      <div id="rres"></div>
+    </div>
+
+    <!-- ALL RUNS -->
+    <div id="pg-runs" class="page">
+      <div class="sec">
+        <div class="sh"><h3>All Reconciliation Runs</h3><span id="rcount" style="font-size:11px;color:var(--muted)"></span></div>
+        <div class="sb2"><div class="tw"><table>
+          <thead><tr><th>Run ID</th><th>Status</th><th>Dt Tol</th><th>Dqty Tol</th><th>Match Rate</th><th>Matched</th><th>Conflicting</th><th>Unmatched Exc</th><th>Rejected</th><th>Duration</th><th>Started</th></tr></thead>
+          <tbody id="rbody"><tr><td colspan="11"><div class="empty"><span class="sp"></span> Loading...</div></td></tr></tbody>
+        </table></div></div>
+      </div>
+    </div>
+
+    <!-- REPORT -->
+    <div id="pg-report" class="page">
+      <div class="sec">
+        <div class="sh"><h3>Load Report</h3></div>
+        <div class="sb2">
+          <div class="fr">
+            <div class="fg" style="flex:2"><label>Run ID</label><input type="text" id="repid" placeholder="Paste a Run ID or click a row in All Runs"/></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn bp" onclick="loadRep()">&#128202; Load</button>
+              <button class="btn bo" onclick="dlCsv()">&#11015; CSV</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid" id="repcards" style="display:none"></div>
+      <div class="sec" id="reptbl" style="display:none">
+        <div class="sh"><h3>Results</h3><div style="display:flex;gap:6px" id="repfilters"></div></div>
+        <div class="sb2"><div class="tw"><table>
+          <thead><tr><th>Status</th><th>User TX</th><th>Exchange TX</th><th>Asset</th><th>Type</th><th>Dt(s)</th><th>Dqty%</th><th>Confidence</th><th>Method</th><th>Conflicts</th></tr></thead>
+          <tbody id="repbody"></tbody>
+        </table></div></div>
+      </div>
+    </div>
+
+    <!-- UNMATCHED -->
+    <div id="pg-unmatched" class="page">
+      <div class="sec">
+        <div class="sh"><h3>Unmatched Transactions</h3></div>
+        <div class="sb2">
+          <div class="fr">
+            <div class="fg" style="flex:2"><label>Run ID</label><input type="text" id="umid" placeholder="Paste a Run ID"/></div>
+            <div><button class="btn bp" onclick="loadUM()">&#128269; Load</button></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="sec">
+          <div class="sh"><h3>Unmatched User</h3><span id="umc1" style="font-size:11px;color:var(--muted)"></span></div>
+          <div class="sb2"><div class="tw"><table>
+            <thead><tr><th>User TX</th><th>Asset</th><th>Type</th><th>Timestamp</th><th>Qty</th></tr></thead>
+            <tbody id="umb1"><tr><td colspan="5"><div class="empty"><div class="empty-icon">&#128269;</div><p>Load a run first</p></div></td></tr></tbody>
+          </table></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh"><h3>Unmatched Exchange</h3><span id="umc2" style="font-size:11px;color:var(--muted)"></span></div>
+          <div class="sb2"><div class="tw"><table>
+            <thead><tr><th>Exchange TX</th><th>Asset</th><th>Type</th><th>Timestamp</th><th>Qty</th></tr></thead>
+            <tbody id="umb2"><tr><td colspan="5"><div class="empty"><div class="empty-icon">&#128269;</div><p>Load a run first</p></div></td></tr></tbody>
+          </table></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REJECTED -->
+    <div id="pg-rejected" class="page">
+      <div class="sec">
+        <div class="sh"><h3>Rejected Rows</h3>
+          <div style="display:flex;gap:8px">
+            <button class="btn bo" style="font-size:11px;padding:5px 10px" onclick="loadRej('user')">User CSV</button>
+            <button class="btn bo" style="font-size:11px;padding:5px 10px" onclick="loadRej('exchange')">Exchange CSV</button>
+          </div>
+        </div>
+        <div class="sb2"><div class="tw"><table>
+          <thead><tr><th>Row #</th><th>Source</th><th>TX ID</th><th>Reason</th><th>Raw Data</th></tr></thead>
+          <tbody id="rejbody"><tr><td colspan="5"><div class="empty"><div class="empty-icon">&#128465;</div><p>Click User CSV or Exchange CSV above</p></div></td></tr></tbody>
+        </table></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div id="tc"></div>
+<script>
+// ── State
+var allResults = [], activeFilter = 'ALL', curPage = 'dashboard';
+
+// ── Navigation (fixed - uses data-page attribute)
+document.querySelectorAll('.ni').forEach(function(el) {
+  el.addEventListener('click', function() { go(this.getAttribute('data-page')); });
+});
+
+function go(page) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
+  document.querySelectorAll('.ni').forEach(function(n){ n.classList.remove('on'); });
+  var pg = document.getElementById('pg-' + page);
+  if (pg) pg.classList.add('on');
+  document.querySelectorAll('.ni').forEach(function(n){
+    if (n.getAttribute('data-page') === page) n.classList.add('on');
+  });
+  var titles = {dashboard:'Dashboard',ingest:'Ingest CSV',reconcile:'Reconcile',runs:'All Runs',report:'Report',unmatched:'Unmatched Transactions',rejected:'Rejected Rows'};
+  document.getElementById('ptitle').textContent = titles[page] || page;
+  curPage = page;
+  if (page === 'dashboard') loadDash();
+  if (page === 'runs') loadRuns();
+  if (page === 'rejected') loadRej('user');
+}
+
+function refresh() { go(curPage); }
+
+// ── Toast
+function toast(msg, type) {
+  type = type || 'info';
+  var c = document.getElementById('tc');
+  var t = document.createElement('div');
+  t.className = 'toast t' + type.charAt(0);
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3500);
+}
+
+// ── Helpers
+function sbadge(s) {
+  var m = {MATCHED:'bg',CONFLICTING:'by',UNMATCHED_USER:'br',UNMATCHED_EXCHANGE:'bo2',COMPLETED:'bg',FAILED:'br',RUNNING:'bb',PENDING:'bx'};
+  return '<span class="badge ' + (m[s]||'bx') + '">' + s + '</span>';
+}
+function abadge(a) {
+  var m = {BTC:'by',ETH:'bb',SOL:'bg',USDT:'bg',MATIC:'bb',LINK:'bb'};
+  return '<span class="badge ' + (m[a]||'bx') + '">' + a + '</span>';
+}
+function fdate(d) {
+  if (!d) return '-';
+  var dt = new Date(d);
+  return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' ' + dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+function fid(id) {
+  if (!id) return '-';
+  return '<span class="mono" title="' + id + '">' + id.substring(0,8) + '...</span>';
+}
+function mbar(rate) {
+  var col = rate >= 90 ? 'var(--green)' : rate >= 70 ? 'var(--yellow)' : 'var(--red)';
+  return '<div style="min-width:80px"><span style="font-weight:700;color:' + col + '">' + rate + '%</span><div class="pb"><div class="pf" style="width:' + rate + '%;background:' + col + '"></div></div></div>';
+}
+function erow(cols, msg) {
+  return '<tr><td colspan="' + cols + '"><div class="empty"><div class="empty-icon">&#128204;</div><p>' + msg + '</p></div></td></tr>';
+}
+
+// ── API
+function api(url, opts) {
+  return fetch(url, opts || {}).then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error && d.error.message || 'Request failed'); return d; }); });
+}
+
+// ── DASHBOARD
+function loadDash() {
+  // Health
+  api('/health').then(function(h) {
+    document.getElementById('hbanner').innerHTML = '<div class="hb hok"><span class="dot dg"></span> Service healthy &nbsp;&#183;&nbsp; v' + h.version + ' &nbsp;&#183;&nbsp; ' + h.environment + ' &nbsp;&#183;&nbsp; ' + new Date(h.timestamp).toLocaleTimeString() + '</div>';
+  }).catch(function() {
+    document.getElementById('hbanner').innerHTML = '<div class="hb herr"><span class="dot dr"></span> Service unreachable</div>';
+  });
+  // Runs
+  api('/runs?limit=5').then(function(r) {
+    var runs = r.data, latest = runs[0];
+    var stats = document.getElementById('dstats');
+    if (!latest) {
+      stats.innerHTML = '<div class="card"><div class="cl">No runs yet</div><div class="cv" style="font-size:14px;color:var(--muted)">Ingest data then reconcile</div></div>';
+    } else {
+      stats.innerHTML =
+        '<div class="card cg"><div class="cl">Match Rate</div><div class="cv">' + latest.matchRate + '%</div><div class="pb"><div class="pf" style="width:' + latest.matchRate + '%"></div></div></div>' +
+        '<div class="card cg"><div class="cl">Matched</div><div class="cv">' + latest.matched + '</div><div class="cs">of ' + latest.totalUser + ' user txns</div></div>' +
+        '<div class="card cy"><div class="cl">Conflicting</div><div class="cv">' + latest.conflicting + '</div></div>' +
+        '<div class="card co"><div class="cl">Unmatched Exc</div><div class="cv">' + latest.unmatchedExchange + '</div></div>' +
+        '<div class="card cr"><div class="cl">Rejected</div><div class="cv">' + latest.rejectedUser + '</div></div>' +
+        '<div class="card cb"><div class="cl">Total Runs</div><div class="cv">' + r.pagination.total + '</div></div>';
+    }
+    var tbody = document.getElementById('druns');
+    if (!runs.length) { tbody.innerHTML = erow(8,'No runs yet — ingest data then reconcile'); return; }
+    tbody.innerHTML = runs.map(function(run) {
+      return '<tr class="cp" onclick="openRep(\'' + run.runId + '\')">' +
+        '<td>' + fid(run.runId) + '</td>' +
+        '<td>' + sbadge(run.status) + '</td>' +
+        '<td>' + mbar(run.matchRate) + '</td>' +
+        '<td style="color:var(--green);font-weight:600">' + run.matched + '</td>' +
+        '<td style="color:var(--yellow)">' + run.conflicting + '</td>' +
+        '<td style="color:var(--orange)">' + run.unmatchedExchange + '</td>' +
+        '<td class="mono">' + run.durationMs + 'ms</td>' +
+        '<td class="mono">' + fdate(run.startedAt) + '</td></tr>';
+    }).join('');
+  }).catch(function(e) {
+    document.getElementById('druns').innerHTML = erow(8, e.message);
+    document.getElementById('dstats').innerHTML = '<div class="card cr"><div class="cl">Error</div><div class="cv" style="font-size:14px">' + e.message + '</div></div>';
+  });
+}
+
+function openRep(id) {
+  document.getElementById('repid').value = id;
+  go('report');
+  loadRep();
+}
+
+// ── INGEST
+function doIngest() {
+  var btn = document.getElementById('ibtn');
+  btn.disabled = true; btn.innerHTML = '<span class="sp"></span> Ingesting...';
+  document.getElementById('ires').innerHTML = '';
+  api('/ingest', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(function(data) {
+    var u = data.data.user, e = data.data.exchange;
+    document.getElementById('ires').innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' + icard('User CSV',u) + icard('Exchange CSV',e) + '</div>';
+    toast('Ingestion completed', 'success');
+  }).catch(function(err) {
+    document.getElementById('ires').innerHTML = '<div class="sec"><div class="sb2" style="color:var(--red)">Error: ' + err.message + '</div></div>';
+    toast(err.message, 'error');
+  }).finally(function() { btn.disabled=false; btn.innerHTML='&#128229; Run Ingestion'; });
+}
+function icard(title, d) {
+  var reasons = d.rejectionReasons || [];
+  return '<div class="sec"><div class="sh"><h3>' + title + '</h3>' + sbadge(d.rejected > 0 ? 'CONFLICTING' : 'MATCHED') + '</div><div class="sb2">' +
+    '<div class="grid" style="grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:' + (reasons.length?'14px':'0') + '">' +
+    '<div class="card"><div class="cl">Parsed</div><div class="cv" style="font-size:20px">' + d.totalParsed + '</div></div>' +
+    '<div class="card cg"><div class="cl">Inserted</div><div class="cv" style="font-size:20px">' + d.inserted + '</div></div>' +
+    '<div class="card cb"><div class="cl">Skipped</div><div class="cv" style="font-size:20px">' + d.skipped + '</div></div>' +
+    '<div class="card ' + (d.rejected>0?'cr':'') + '"><div class="cl">Rejected</div><div class="cv" style="font-size:20px">' + d.rejected + '</div></div></div>' +
+    (reasons.length ? '<div style="margin-top:8px">' + reasons.map(function(r){ return '<div style="font-size:12px;color:var(--red);padding:4px 0;border-bottom:1px solid var(--bdr)">&#9888; ' + r + '</div>'; }).join('') + '</div>' : '') +
+    '</div></div>';
+}
+
+// ── RECONCILE
+function doRecon() {
+  var btn = document.getElementById('rbtn');
+  btn.disabled = true; btn.innerHTML = '<span class="sp"></span> Running...';
+  document.getElementById('rres').innerHTML = '';
+  var body = {};
+  var ts = document.getElementById('rts').value;
+  var qty = document.getElementById('rqty').value;
+  if (ts) body.timestampToleranceSeconds = parseFloat(ts);
+  if (qty) body.quantityTolerancePct = parseFloat(qty);
+  api('/reconcile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(data) {
+    var s = data.data.summary, id = data.data.runId;
+    document.getElementById('rres').innerHTML = '<div class="sec"><div class="sh"><h3>Run Completed</h3>' +
+      '<div style="display:flex;gap:8px;align-items:center"><span class="mono">' + id.substring(0,18) + '...</span>' +
+      '<button class="btn bp" style="font-size:11px;padding:5px 10px" onclick="openRep(\'' + id + '\')">View Report &#8594;</button></div></div>' +
+      '<div class="sb2"><div class="grid">' +
+      '<div class="card cg"><div class="cl">Match Rate</div><div class="cv">' + s.matchRate + '%</div><div class="pb"><div class="pf" style="width:' + s.matchRate + '%"></div></div></div>' +
+      '<div class="card cg"><div class="cl">Matched</div><div class="cv">' + s.matched + '</div><div class="cs">of ' + s.totalUser + '</div></div>' +
+      '<div class="card cy"><div class="cl">Conflicting</div><div class="cv">' + s.conflicting + '</div></div>' +
+      '<div class="card co"><div class="cl">Unmatched Exc</div><div class="cv">' + s.unmatchedExchange + '</div></div>' +
+      '<div class="card cr"><div class="cl">Rejected</div><div class="cv">' + s.rejectedUser + '</div></div>' +
+      '<div class="card cb"><div class="cl">Duration</div><div class="cv" style="font-size:18px">' + s.durationMs + 'ms</div></div>' +
+      '</div></div></div>';
+    toast('Reconciliation done — ' + s.matchRate + '% match rate', 'success');
+  }).catch(function(err) {
+    document.getElementById('rres').innerHTML = '<div class="sec"><div class="sb2" style="color:var(--red)">Error: ' + err.message + '</div></div>';
+    toast(err.message, 'error');
+  }).finally(function() { btn.disabled=false; btn.innerHTML='&#9881;&#65039; Start Reconciliation'; });
+}
+
+// ── ALL RUNS
+function loadRuns() {
+  var tbody = document.getElementById('rbody');
+  tbody.innerHTML = '<tr><td colspan="11"><div class="empty"><span class="sp"></span> Loading...</div></td></tr>';
+  api('/runs?limit=50').then(function(data) {
+    document.getElementById('rcount').textContent = data.pagination.total + ' total';
+    if (!data.data.length) { tbody.innerHTML = erow(11,'No runs yet'); return; }
+    tbody.innerHTML = data.data.map(function(r) {
+      return '<tr class="cp" onclick="openRep(\'' + r.runId + '\')">' +
+        '<td>' + fid(r.runId) + '</td>' +
+        '<td>' + sbadge(r.status) + '</td>' +
+        '<td class="mono">' + r.config.timestampToleranceSeconds + 's</td>' +
+        '<td class="mono">' + r.config.quantityTolerancePct + '%</td>' +
+        '<td>' + mbar(r.matchRate) + '</td>' +
+        '<td style="color:var(--green);font-weight:600">' + r.matched + '</td>' +
+        '<td style="color:var(--yellow)">' + r.conflicting + '</td>' +
+        '<td style="color:var(--orange)">' + r.unmatchedExchange + '</td>' +
+        '<td style="color:var(--red)">' + r.rejectedUser + '</td>' +
+        '<td class="mono">' + r.durationMs + 'ms</td>' +
+        '<td class="mono">' + fdate(r.startedAt) + '</td></tr>';
+    }).join('');
+  }).catch(function(e) { tbody.innerHTML = erow(11, e.message); toast(e.message,'error'); });
+}
+
+// ── REPORT
+function loadRep() {
+  var runId = document.getElementById('repid').value.trim();
+  if (!runId) { toast('Please enter a Run ID','error'); return; }
+  var tbody = document.getElementById('repbody');
+  tbody.innerHTML = '<tr><td colspan="10"><div class="empty"><span class="sp"></span> Loading...</div></td></tr>';
+  document.getElementById('reptbl').style.display = 'block';
+  document.getElementById('repcards').style.display = 'none';
+  Promise.all([api('/report/' + runId), api('/report/' + runId + '/summary')]).then(function(res) {
+    var rep = res[0], sum = res[1];
+    allResults = rep.data.results;
+    var s = sum.data.counts;
+    var cards = document.getElementById('repcards');
+    cards.style.display = 'grid';
+    cards.innerHTML =
+      '<div class="card cg"><div class="cl">Match Rate</div><div class="cv">' + sum.data.matchRate + '%</div><div class="pb"><div class="pf" style="width:' + sum.data.matchRate + '%"></div></div></div>' +
+      '<div class="card cg"><div class="cl">Matched</div><div class="cv">' + s.matched + '</div></div>' +
+      '<div class="card cy"><div class="cl">Conflicting</div><div class="cv">' + s.conflicting + '</div></div>' +
+      '<div class="card cr"><div class="cl">Unmatched User</div><div class="cv">' + s.unmatchedUser + '</div></div>' +
+      '<div class="card co"><div class="cl">Unmatched Exc</div><div class="cv">' + s.unmatchedExchange + '</div></div>' +
+      '<div class="card"><div class="cl">Dt Tolerance</div><div class="cv" style="font-size:16px">' + sum.data.config.timestampToleranceSeconds + 's</div></div>' +
+      '<div class="card"><div class="cl">Dqty Tolerance</div><div class="cv" style="font-size:16px">' + sum.data.config.quantityTolerancePct + '%</div></div>';
+    var counts = {};
+    allResults.forEach(function(r){ counts[r.status] = (counts[r.status]||0)+1; });
+    var filters = ['ALL','MATCHED','CONFLICTING','UNMATCHED_USER','UNMATCHED_EXCHANGE'];
+    document.getElementById('repfilters').innerHTML = filters.map(function(f) {
+      var label = f === 'ALL' ? 'All (' + allResults.length + ')' : f + ' (' + (counts[f]||0) + ')';
+      return '<button class="btn ' + (f===activeFilter?'bp':'bo') + '" style="font-size:10px;padding:4px 9px" onclick="filterRep(\'' + f + '\')">' + label + '</button>';
+    }).join('');
+    renderRep(allResults);
+  }).catch(function(e) { tbody.innerHTML = erow(10, e.message); toast(e.message,'error'); });
+}
+function filterRep(f) {
+  activeFilter = f;
+  var filtered = f === 'ALL' ? allResults : allResults.filter(function(r){ return r.status === f; });
+  var counts = {};
+  allResults.forEach(function(r){ counts[r.status] = (counts[r.status]||0)+1; });
+  var filters = ['ALL','MATCHED','CONFLICTING','UNMATCHED_USER','UNMATCHED_EXCHANGE'];
+  document.getElementById('repfilters').innerHTML = filters.map(function(ff) {
+    var label = ff === 'ALL' ? 'All (' + allResults.length + ')' : ff + ' (' + (counts[ff]||0) + ')';
+    return '<button class="btn ' + (ff===f?'bp':'bo') + '" style="font-size:10px;padding:4px 9px" onclick="filterRep(\'' + ff + '\')">' + label + '</button>';
+  }).join('');
+  renderRep(filtered);
+}
+function renderRep(results) {
+  var tbody = document.getElementById('repbody');
+  if (!results.length) { tbody.innerHTML = erow(10,'No results for this filter'); return; }
+  var mm = {exact_id:'&#127919; exact_id', exact_fields:'&#9989; exact_fields', tolerance:'&#128208; tolerance', fuzzy_timestamp:'&#128269; fuzzy'};
+  tbody.innerHTML = results.map(function(r) {
+    var reasons = (r.conflictReasons||[]).map(function(c){ return '<span class="rt">' + c + '</span>'; }).join('');
+    var conf = r.confidenceScore != null ? r.confidenceScore.toFixed(0) : '-';
+    var confCol = r.confidenceScore >= 90 ? 'var(--green)' : r.confidenceScore >= 60 ? 'var(--yellow)' : 'var(--red)';
+    return '<tr>' +
+      '<td>' + sbadge(r.status) + '</td>' +
+      '<td class="mono">' + (r.userTransactionId||'-') + '</td>' +
+      '<td class="mono">' + (r.exchangeTransactionId||'-') + '</td>' +
+      '<td>' + abadge(r.asset) + '</td>' +
+      '<td><span class="badge bx">' + r.type + '</span></td>' +
+      '<td class="mono">' + (r.timeDeltaSeconds!=null ? r.timeDeltaSeconds+'s' : '-') + '</td>' +
+      '<td class="mono">' + (r.quantityDeltaPct!=null ? r.quantityDeltaPct.toFixed(4)+'%' : '-') + '</td>' +
+      '<td><span style="font-weight:700;color:' + confCol + '">' + conf + '</span></td>' +
+      '<td style="font-size:11px">' + (r.matchMethod ? (mm[r.matchMethod]||r.matchMethod) : '-') + '</td>' +
+      '<td>' + (reasons||'-') + '</td></tr>';
+  }).join('');
+}
+function dlCsv() {
+  var id = document.getElementById('repid').value.trim();
+  if (!id) { toast('Enter a Run ID first','error'); return; }
+  window.open('/report/' + id + '?format=csv','_blank');
+}
+
+// ── UNMATCHED
+function loadUM() {
+  var runId = document.getElementById('umid').value.trim();
+  if (!runId) { toast('Please enter a Run ID','error'); return; }
+  api('/report/' + runId + '/unmatched').then(function(data) {
+    var u = data.data.unmatchedUser, e = data.data.unmatchedExchange;
+    document.getElementById('umc1').textContent = u.length + ' rows';
+    document.getElementById('umc2').textContent = e.length + ' rows';
+    document.getElementById('umb1').innerHTML = u.length ? u.map(function(r){
+      return '<tr><td class="mono">' + (r.userTransactionId||'-') + '</td><td>' + abadge(r.asset) + '</td><td><span class="badge bx">' + r.type + '</span></td><td class="mono">' + fdate(r.userTimestamp) + '</td><td class="mono">' + (r.userQuantity!=null?r.userQuantity:'-') + '</td></tr>';
+    }).join('') : erow(5,'No unmatched user transactions &#10003;');
+    document.getElementById('umb2').innerHTML = e.length ? e.map(function(r){
+      return '<tr><td class="mono">' + (r.exchangeTransactionId||'-') + '</td><td>' + abadge(r.asset) + '</td><td><span class="badge bx">' + r.type + '</span></td><td class="mono">' + fdate(r.exchangeTimestamp) + '</td><td class="mono">' + (r.exchangeQuantity!=null?r.exchangeQuantity:'-') + '</td></tr>';
+    }).join('') : erow(5,'No unmatched exchange transactions &#10003;');
+    toast('Loaded unmatched transactions','success');
+  }).catch(function(e){ toast(e.message,'error'); });
+}
+
+// ── REJECTED
+function loadRej(source) {
+  var tbody = document.getElementById('rejbody');
+  tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><span class="sp"></span> Loading...</div></td></tr>';
+  fetch('/api/rejected?source=' + source).then(function(r){ return r.json(); }).then(function(data) {
+    if (!data.success || !data.data.length) { tbody.innerHTML = erow(5,'No rejected rows for ' + source + ' CSV &#10003;'); return; }
+    tbody.innerHTML = data.data.map(function(r) {
+      return '<tr>' +
+        '<td class="mono">' + r.rowIndex + '</td>' +
+        '<td><span class="badge ' + (r.source==='user'?'br':'bo2') + '">' + r.source.toUpperCase() + '</span></td>' +
+        '<td class="mono">' + (r.rawRow && r.rawRow.transaction_id ? r.rawRow.transaction_id : '-') + '</td>' +
+        '<td style="color:var(--red);font-size:12px">' + r.reason + '</td>' +
+        '<td><details><summary style="cursor:pointer;font-size:11px;color:var(--muted)">View raw</summary>' +
+        '<pre style="font-size:10px;color:var(--muted);margin-top:6px;white-space:pre-wrap;max-width:300px">' + JSON.stringify(r.rawRow,null,2) + '</pre></details></td></tr>';
+    }).join('');
+  }).catch(function(e){ tbody.innerHTML = erow(5, e.message); toast(e.message,'error'); });
+}
+
+// ── Init
+loadDash();
+</script></body></html>

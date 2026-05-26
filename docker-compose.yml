@@ -1,0 +1,70 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      target: production
+    container_name: crypto-reconciliation-app
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/crypto_reconciliation
+      - TIMESTAMP_TOLERANCE_SECONDS=300
+      - QUANTITY_TOLERANCE_PCT=0.01
+      - LOG_LEVEL=info
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - reconciliation-net
+    volumes:
+      - ./data:/app/data:ro
+
+  mongo:
+    image: mongo:7.0
+    container_name: crypto-reconciliation-mongo
+    ports:
+      - '27017:27017'
+    environment:
+      - MONGO_INITDB_DATABASE=crypto_reconciliation
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - reconciliation-net
+
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: crypto-reconciliation-mongo-express
+    ports:
+      - '8081:8081'
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - reconciliation-net
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  reconciliation-net:
+    driver: bridge

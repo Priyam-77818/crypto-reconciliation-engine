@@ -1,0 +1,171 @@
+{
+  "info": {
+    "name": "Crypto Reconciliation Engine",
+    "description": "Production-grade Crypto Transaction Reconciliation Engine API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "crypto-recon-v1"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "runId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Check if the service is running"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ingestion",
+      "item": [
+        {
+          "name": "Ingest CSV Files (Default Paths)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Success true', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ingest",
+            "description": "Ingests both CSV files from the configured server paths"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reconciliation",
+      "item": [
+        {
+          "name": "Trigger Reconciliation (Default Config)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 202', () => pm.response.to.have.status(202));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('runId', body.data.runId);",
+                  "console.log('Run ID:', body.data.runId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/reconcile",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "Triggers reconciliation with default tolerance settings"
+          }
+        },
+        {
+          "name": "Trigger Reconciliation (Custom Config)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/reconcile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timestampToleranceSeconds\": 600,\n  \"quantityTolerancePct\": 0.05\n}"
+            },
+            "description": "Triggers reconciliation with custom tolerance overrides"
+          }
+        },
+        {
+          "name": "List All Runs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/runs?limit=20&skip=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["runs"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "skip", "value": "0" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Get Full Report (JSON)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/report/{{runId}}",
+            "description": "Returns the full reconciliation report as JSON"
+          }
+        },
+        {
+          "name": "Get Full Report (CSV)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/report/{{runId}}?format=csv",
+              "host": ["{{baseUrl}}"],
+              "path": ["report", "{{runId}}"],
+              "query": [{ "key": "format", "value": "csv" }]
+            },
+            "description": "Downloads the full reconciliation report as CSV"
+          }
+        },
+        {
+          "name": "Get Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/report/{{runId}}/summary",
+            "description": "Returns summary statistics for the run"
+          }
+        },
+        {
+          "name": "Get Unmatched Transactions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/report/{{runId}}/unmatched?limit=100&skip=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["report", "{{runId}}", "unmatched"],
+              "query": [
+                { "key": "limit", "value": "100" },
+                { "key": "skip", "value": "0" }
+              ]
+            },
+            "description": "Returns all unmatched transactions for the run"
+          }
+        }
+      ]
+    }
+  ]
+}
