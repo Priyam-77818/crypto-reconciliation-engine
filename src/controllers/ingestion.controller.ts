@@ -28,14 +28,19 @@ export async function ingestDefault(req: Request, res: Response): Promise<void> 
 
 /**
  * GET /health
- * Health check endpoint.
+ * Health check endpoint — shows MongoDB connection state too.
  */
 export async function healthCheck(_req: Request, res: Response): Promise<void> {
+  const mongoState = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  const mongoose = await import('mongoose');
+  const dbStatus = mongoState[mongoose.default.connection.readyState] ?? 'unknown';
+
   res.status(200).json({
     status: 'ok',
     service: config.app.name,
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: config.app.env,
+    database: dbStatus,
   });
 }

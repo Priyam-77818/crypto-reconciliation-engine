@@ -4,9 +4,9 @@
   "description": "Production-grade Crypto Transaction Reconciliation Engine",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "nodemon",
-    "build": "tsc && node -e \"const fs=require('fs'),path=require('path');function cp(s,d){if(!fs.existsSync(d))fs.mkdirSync(d,{recursive:true});fs.readdirSync(s).forEach(f=>{const sp=path.join(s,f),dp=path.join(d,f);fs.statSync(sp).isDirectory()?cp(sp,dp):fs.copyFileSync(sp,dp)});}cp('src/public','dist/public');console.log('public copied');\"",
-    "start": "node dist/app.js",
+    "dev": "node init && nodemon",
+    "build": "node init && tsc && node -e \"const fs=require('fs'),path=require('path');function cp(s,d){if(!fs.existsSync(d))fs.mkdirSync(d,{recursive:true});fs.readdirSync(s).forEach(f=>{const sp=path.join(s,f),dp=path.join(d,f);fs.statSync(sp).isDirectory()?cp(sp,dp):fs.copyFileSync(sp,dp)});}cp('src/public','dist/public');console.log('public copied');\"",
+    "start": "node init && node dist/app.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
