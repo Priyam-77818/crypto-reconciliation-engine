@@ -27,8 +27,9 @@ export const config = {
     dbName: getEnv('MONGODB_DB_NAME', 'crypto_reconciliation'),
     options: {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 30000,  // 30s — Atlas needs more time on cold start
+      socketTimeoutMS: 60000,
+      connectTimeoutMS: 30000,
     },
   },
   reconciliation: {

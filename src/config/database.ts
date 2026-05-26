@@ -2,8 +2,13 @@ import mongoose from 'mongoose';
 import { config } from './index';
 import { logger } from '../utils/logger';
 
+const MAX_RETRIES = 5;
+const RETRY_DELAY_MS = 5000;
+
 /**
  * Establishes a MongoDB connection with retry logic.
+ * Retries up to MAX_RETRIES times with exponential backoff.
+ * Critical for Atlas cold starts on Render free tier.
  */
 export async function connectDatabase(): Promise<void> {
   const { uri, options } = config.mongodb;
@@ -20,7 +25,28 @@ export async function connectDatabase(): Promise<void> {
     logger.warn('MongoDB disconnected');
   });
 
-  await mongoose.connect(uri, options);
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      logger.info({ attempt, maxRetries: MAX_RETRIES }, 'Connecting to MongoDB...');
+      await mongoose.connect(uri, options);
+      logger.info('MongoDB connection established');
+      return;
+    } catch (err) {
+      const isLastAttempt = attempt === MAX_RETRIES;
+      logger.error(
+        { attempt, maxRetries: MAX_RETRIES, err },
+        `MongoDB connection attempt ${attempt} failed`,
+      );
+      if (isLastAttempt) {
+        throw new Error(
+          `Failed to connect to MongoDB after ${MAX_RETRIES} attempts: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      const delay = RETRY_DELAY_MS * attempt;
+      logger.info({ delayMs: delay }, `Retrying in ${delay / 1000}s...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
 }
 
 /**
